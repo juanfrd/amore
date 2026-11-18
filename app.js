@@ -1,66 +1,68 @@
-// Add the public checkout URL when the PDF and price are ready.
+// Preencha com o link público do checkout quando o PDF estiver à venda.
 const checkoutUrl = '';
 
 const questions = [
   {
-    title: 'Después de una pelea, ¿qué suele hacerte volver?',
+    title: 'Depois de uma briga, o que mais faz você querer voltar?',
     options: [
-      'Me promete que las cosas van a cambiar.',
-      'Me angustia pensar que la relación se termine.',
-      'Termino sintiendo que todo fue culpa mía.',
+      { pattern: 'hope', label: 'A promessa de mudança' },
+      { pattern: 'connection', label: 'A saudade da companhia' },
     ],
   },
   {
-    title: '¿Qué te pesa más cuando piensas en tomar distancia?',
+    title: 'O que mais pesa quando você pensa em se afastar?',
     options: [
-      'La idea de irme justo cuando todo podría mejorar.',
-      'Echar de menos la compañía y la rutina.',
-      'Sentir que le estoy fallando.',
+      { pattern: 'connection', label: 'Ficar sem aquela companhia' },
+      { pattern: 'guilt', label: 'Sentir que estou magoando a outra pessoa' },
     ],
   },
   {
-    title: 'Cuando intentas poner un límite, ¿qué suele pasar?',
+    title: 'O que faz você repensar um limite que colocou?',
     options: [
-      'Lo dejo pasar si la otra persona vuelve a acercarse.',
-      'Me cuesta mantenerlo cuando llevamos tiempo sin hablar.',
-      'Acabo disculpándome por haberlo puesto.',
+      { pattern: 'guilt', label: 'Pensar que fui longe demais' },
+      { pattern: 'hope', label: 'Achar que agora vai ser diferente' },
     ],
   },
   {
-    title: '¿Qué recuerdo aparece cuando dudas de alejarte?',
+    title: 'Quando vocês ficam sem se falar, o que passa pela sua cabeça?',
     options: [
-      'Los buenos momentos y lo que podríamos recuperar.',
-      'Lo que sentía al saber que tenía a alguien cerca.',
-      'Las veces en las que pensé que podía haber hecho más.',
+      { pattern: 'hope', label: 'Talvez ainda dê para mudar' },
+      { pattern: 'connection', label: 'Sinto falta da nossa rotina' },
     ],
   },
   {
-    title: '¿Qué te gustaría aclarar primero?',
+    title: 'O que torna mais difícil manter sua decisão?',
     options: [
-      'Cómo distinguir un cambio real de una promesa.',
-      'Cómo sostenerme cuando me siento sin compañía.',
-      'Cómo respetar mis límites sin cargar con toda la culpa.',
+      { pattern: 'guilt', label: 'Pensar que tudo foi culpa minha' },
+      { pattern: 'connection', label: 'Sentir falta de ter alguém por perto' },
+    ],
+  },
+  {
+    title: 'O que você mais quer entender agora?',
+    options: [
+      { pattern: 'hope', label: 'Como reconhecer uma mudança de verdade' },
+      { pattern: 'guilt', label: 'Como colocar limites sem tanta culpa' },
     ],
   },
 ];
 
-const results = [
-  {
-    title: 'La esperanza de que cambie',
-    summary: 'Tus respuestas sugieren que las reconciliaciones y las promesas pueden pesar mucho cuando decides si volver a intentarlo.',
-    step: 'Piensa en una promesa que hayas escuchado más de una vez. Pregúntate qué cambió en los hechos y cuánto duró ese cambio.',
+const results = {
+  hope: {
+    title: 'A esperança de que a relação mude',
+    summary: 'Pelas suas respostas, as promessas e os momentos de reconciliação parecem pesar quando você pensa em tentar de novo.',
+    step: 'Lembre de uma promessa que você já ouviu mais de uma vez. O que mudou na prática? Por quanto tempo?',
   },
-  {
-    title: 'El miedo a perder la conexión',
-    summary: 'Tus respuestas sugieren que imaginar la distancia, el silencio o un cambio de rutina puede hacerte más difícil sostener tu decisión.',
-    step: 'Piensa en alguien de confianza con quien puedas hablar cuando extrañes la relación. Elige también una actividad sencilla para ese momento.',
+  connection: {
+    title: 'A saudade da conexão',
+    summary: 'Pelas suas respostas, sentir falta da companhia e da rotina de vocês pode tornar mais difícil manter a distância.',
+    step: 'Pense em alguém de confiança com quem você pode conversar quando bater a saudade.',
   },
-  {
-    title: 'La culpa al poner límites',
-    summary: 'Tus respuestas sugieren que, cuando intentas cuidar tus límites, podrías acabar asumiendo más responsabilidad de la que te corresponde.',
-    step: 'Recuerda un límite que quisiste poner y pregúntate qué estabas intentando cuidar. Si escribirlo te resulta seguro, ponlo en una frase breve.',
+  guilt: {
+    title: 'A culpa ao colocar limites',
+    summary: 'Pelas suas respostas, você pode acabar assumindo mais responsabilidade do que cabe a você quando tenta colocar um limite.',
+    step: 'Lembre de um limite que você tentou colocar. O que você queria proteger naquele momento?',
   },
-];
+};
 
 const screen = document.querySelector('#screen');
 const intro = screen.innerHTML;
@@ -75,36 +77,41 @@ function render() {
     const question = questions[current];
     screen.className = 'question';
     screen.innerHTML = `
-      <p class="step">Pregunta ${current + 1} de ${questions.length}</p>
-      <progress aria-label="Preguntas respondidas" value="${current}" max="${questions.length}"></progress>
+      <p class="step">Pergunta ${current + 1} de ${questions.length}</p>
+      <progress aria-label="Perguntas respondidas" value="${current}" max="${questions.length}"></progress>
       <h1 id="title" tabindex="-1">${question.title}</h1>
       <div class="options">
-        ${question.options.map((option, index) => `
-          <button class="option${answers[current] === index ? ' selected' : ''}" data-answer="${index}" type="button">${option}</button>
+        ${question.options.map(({ pattern, label }) => `
+          <button class="option ${pattern}${answers[current] === pattern ? ' selected' : ''}" data-answer="${pattern}" type="button">
+            <span class="option-art" aria-hidden="true"></span>
+            <span>${label}</span>
+          </button>
         `).join('')}
       </div>
-      <button class="back" data-back type="button">← Volver</button>
+      <button class="back" data-back type="button">← Voltar</button>
     `;
   } else {
-    const scores = results.map((_, index) => answers.filter(answer => answer === index).length);
-    const highest = Math.max(...scores);
+    const scores = Object.fromEntries(Object.keys(results).map(pattern => [
+      pattern, answers.filter(answer => answer === pattern).length,
+    ]));
+    const highest = Math.max(...Object.values(scores));
     const pattern = [...answers].reverse().find(answer => scores[answer] === highest);
     const result = results[pattern];
 
     screen.className = 'result';
     screen.innerHTML = `
-      <p class="step">Tu resultado</p>
+      <p class="step">Seu resultado</p>
       <h1 id="title" tabindex="-1">${result.title}</h1>
       <p>${result.summary}</p>
-      <p><strong>Un primer paso.</strong> ${result.step}</p>
+      <p><strong>Um primeiro passo.</strong> ${result.step}</p>
       <div class="offer">
-        <h2>Tu mapa para salir del ciclo</h2>
-        <p>Una guía en PDF con ejercicios para reconocer qué te hace volver y ordenar tus próximos pasos.</p>
-        <button class="primary" data-offer aria-expanded="false" aria-controls="offer-status" type="button">Quiero descubrir mi mapa <span aria-hidden="true">↗</span></button>
+        <h2>Seu mapa para sair do ciclo</h2>
+        <p>Um guia em PDF com exercícios para entender o que faz você voltar e planejar seus próximos passos.</p>
+        <button class="primary" data-offer aria-expanded="false" aria-controls="offer-status" type="button">Quero descobrir meu mapa <span aria-hidden="true">↗</span></button>
         <p class="note" id="offer-status" role="status" hidden></p>
       </div>
-      <button class="back" data-back type="button">← Revisar mi última respuesta</button>
-      <button class="back" data-restart type="button">Empezar de nuevo</button>
+      <button class="back" data-back type="button">← Rever minha última resposta</button>
+      <button class="back" data-restart type="button">Recomeçar</button>
     `;
   }
   document.querySelector('#title').focus();
@@ -120,7 +127,7 @@ screen.addEventListener('click', event => {
     } else {
       const status = document.querySelector('#offer-status');
       status.hidden = false;
-      status.textContent = 'El PDF estará disponible próximamente.';
+      status.textContent = 'O PDF estará disponível em breve.';
       button.setAttribute('aria-expanded', 'true');
     }
     return;
@@ -133,7 +140,7 @@ screen.addEventListener('click', event => {
     current -= 1;
   } else {
     if (button.hasAttribute('data-answer')) {
-      answers[current] = Number(button.dataset.answer);
+      answers[current] = button.dataset.answer;
     }
     current += 1;
   }

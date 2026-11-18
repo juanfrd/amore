@@ -75,17 +75,81 @@ button, .primary { font: inherit; cursor: pointer; }
 .note { margin-top: 12px; }
 .step { margin-bottom: 8px; }
 progress { display: block; width: 100%; height: 8px; accent-color: var(--accent); margin-bottom: 24px; }
-.options { display: grid; gap: 10px; }
+/* The two answer illustrations fit on the same row, including on phones. */
+.options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(8px, 2vw, 18px); }
 .option {
-  text-align: left;
-  background: #fffaf3;
-  color: inherit;
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 0;
+  padding: clamp(8px, 2vw, 20px);
   border: 1px solid var(--line);
-  border-radius: 6px;
-  min-height: 48px;
-  padding: 12px 16px;
+  border-radius: 12px;
+  color: #382823;
+  background: #fffaf3;
+  font-size: clamp(.74rem, 2.8vw, 1rem);
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
 }
 .option:hover, .option.selected { border-color: var(--accent); background: #f3ddd5; }
+.option:active { transform: scale(.98); }
+.option-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58%;
+  max-width: 114px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--art-paper);
+  color: var(--art-ink);
+}
+.hope { --art-paper: #f2ddab; --art-ink: #8e5023; }
+.connection { --art-paper: #e9d3de; --art-ink: #783e63; }
+.guilt { --art-paper: #d9e2cc; --art-ink: #476540; }
+.option-art::before, .option-art::after { content: ""; position: absolute; }
+
+/* Rising sun, overlapping rings, and a boundary inside a frame. */
+.hope .option-art::before {
+  width: 54%;
+  height: 27%;
+  top: 23%;
+  border-radius: 100px 100px 0 0;
+  background: currentColor;
+}
+.hope .option-art::after {
+  width: 71%;
+  height: 16%;
+  top: 57%;
+  background: repeating-linear-gradient(to bottom, currentColor 0 2px, transparent 2px 6px);
+}
+.connection .option-art::before, .connection .option-art::after {
+  width: 43%;
+  height: 43%;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.connection .option-art::before { left: 16%; top: 23%; }
+.connection .option-art::after { right: 16%; bottom: 23%; }
+.guilt .option-art::before {
+  width: 49%;
+  height: 49%;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  transform: rotate(-12deg);
+}
+.guilt .option-art::after {
+  width: 67%;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-42deg);
+}
 .back { border: 0; background: transparent; color: var(--accent); min-height: 44px; padding: 0 8px 0 0; text-decoration: underline; }
 .offer { margin: 20px 0 4px; padding: 16px; background: #efe0d5; border-radius: 8px; }
 .offer p { margin: 7px 0 12px; }
