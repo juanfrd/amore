@@ -19,9 +19,7 @@ let contact;
 let phrase = '';
 let showSupport = false;
 let checkoutStarted = false;
-let currentRitual;
 let offerObserver;
-let stopResultParallax;
 
 // Eventos anônimos disponíveis para uma integração de analytics.
 // Nenhuma resposta individual, identificador ou dado de contato é incluído.
@@ -146,8 +144,6 @@ function renderResult(goal) {
   const [first, second, , , fifth] = responses;
 
   const details = resultDetails[profile];
-  const card = ritualCards[profile];
-  currentRitual = { card: { ...card, question: personalize(card.question) }, ...ritualCalendar(Date.now()) };
   const cta = `<button class="primary" data-offer type="button">Quero o guia completo — ${offer.price}</button>`;
   show('resultado', 'result', `
     <p class="step">Seu resultado</p>
@@ -171,7 +167,6 @@ function renderResult(goal) {
       <h2 id="goal-title">Seu objetivo</h2>
       <p>Você quer entender: “${personalize(goal.label)}”. Seu guia começa por aí: capítulo “${goal.chapter}”.</p>
     </section>
-    ${renderRitual(currentRitual)}
 
     <section class="cycle-map result-card" aria-labelledby="cycle-title">
       <h2 id="cycle-title">Seu mapa do ciclo</h2>
@@ -222,9 +217,6 @@ function renderResult(goal) {
         <li>Mensagens prontas para quando a pessoa te procura</li>
         <li>Modelos e exercícios para imprimir</li>
       </ul>
-      ${ORDER_BUMP_ENABLED ? `
-        <label class="order-bump"><input type="checkbox" id="lunar-order-bump"> Adicionar Calendário Lunar de 30 dias por WhatsApp — R$ 19</label>
-      ` : ''}
       ${cta}
       <p class="note">${offer.guarantee}</p>
       <p class="note" id="offer-status" role="status"></p>
@@ -247,38 +239,6 @@ function renderResult(goal) {
     observer.disconnect();
   }, { rootMargin: '0px 0px -86px 0px' });
   offerObserver.observe(document.querySelector('#oferta [data-offer]'));
-  stopResultParallax?.();
-  stopResultParallax = startResultParallax();
-}
-
-function startResultParallax() {
-  const layer = document.querySelector('.result-atmosphere');
-  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let frame = 0;
-
-  function draw() {
-    frame = 0;
-    const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = scrollRange > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollRange)) : 0;
-    layer.style.setProperty('--result-drift', motion.matches ? '0%' : (4 - 8 * progress) + '%');
-  }
-
-  function scheduleDraw() {
-    if (!frame) frame = window.requestAnimationFrame(draw);
-  }
-
-  window.addEventListener('scroll', scheduleDraw, { passive: true });
-  window.addEventListener('resize', scheduleDraw);
-  motion.addEventListener('change', scheduleDraw);
-  draw();
-
-  return () => {
-    window.removeEventListener('scroll', scheduleDraw);
-    window.removeEventListener('resize', scheduleDraw);
-    motion.removeEventListener('change', scheduleDraw);
-    window.cancelAnimationFrame(frame);
-    layer.style.removeProperty('--result-drift');
-  };
 }
 
 screen.addEventListener('click', event => {
@@ -322,26 +282,6 @@ screen.addEventListener('click', event => {
     return;
   }
 
-  if (button.dataset.ritual) {
-    const action = button.dataset.ritual;
-    track(action);
-    if (action === 'virar_carta') {
-      document.querySelector('.ritual-card').classList.add('revealed');
-      const copy = document.querySelector('#ritual-card-copy');
-      copy.hidden = false;
-      button.hidden = true;
-      copy.querySelector('h3').focus({ preventScroll: true });
-    } else {
-      const status = document.querySelector('.ritual-status');
-      saveRitualImage(currentRitual, action === 'salvar_carta').then(() => {
-        status.textContent = 'Sua imagem está pronta para compartilhar.';
-      }).catch(() => {
-        status.textContent = 'Não foi possível salvar a imagem. Tente novamente.';
-      });
-    }
-    return;
-  }
-
   if (button.hasAttribute('data-offer')) {
     track('clique_cta');
     if (offer.checkoutUrl) {
@@ -357,9 +297,6 @@ screen.addEventListener('click', event => {
 
   if (button.hasAttribute('data-restart')) {
     offerObserver?.disconnect();
-    stopResultParallax?.();
-    stopResultParallax = undefined;
-    currentRitual = undefined;
     position = -1;
     choices = [];
     checkoutStarted = false;
