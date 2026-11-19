@@ -20,6 +20,8 @@ let phrase = '';
 let showSupport = false;
 let checkoutStarted = false;
 let feedbackTimer;
+let currentRitual;
+let offerObserver;
 const feedbackDuration = 2000;
 
 // Eventos anônimos disponíveis para uma integração de analytics.
@@ -152,6 +154,8 @@ function renderResult(goal) {
   const [first, second, , , fifth] = responses;
 
   const details = resultDetails[profile];
+  const card = ritualCards[profile];
+  currentRitual = { card: { ...card, question: personalize(card.question) }, ...ritualCalendar(Date.now()) };
   const cta = `<button class="primary" data-offer type="button">Quero o guia completo — ${offer.price}</button>`;
   show('resultado', 'result', `
     <p class="step">Seu resultado</p>
@@ -175,13 +179,7 @@ function renderResult(goal) {
       <h2 id="goal-title">Seu objetivo</h2>
       <p>Você quer entender: “${personalize(goal.label)}”. Seu guia começa por aí: capítulo “${goal.chapter}”.</p>
     </section>
-    ${showSafety ? `
-      <aside class="support" aria-labelledby="support-title">
-        <h2 id="support-title">Sua segurança vem primeiro</h2>
-        <p>Se você sentiu medo nessa relação e precisa de apoio, o <a href="tel:180">Ligue 180</a> oferece orientação gratuita no Brasil. Em caso de perigo imediato, ligue <a href="tel:190">190</a>.</p>
-      </aside>
-    ` : ''}
-    <div class="sticky-offer">${cta}</div>
+    ${renderRitual(currentRitual)}
 
     <section class="cycle-map result-card" aria-labelledby="cycle-title">
       <h2 id="cycle-title">Seu mapa do ciclo</h2>
@@ -221,6 +219,13 @@ function renderResult(goal) {
       <p class="step">Checklist de sinais de alerta · 1 página</p>
     </section>
 
+    ${showSafety ? `
+      <aside class="support" aria-labelledby="support-title">
+        <h2 id="support-title">Sua segurança vem primeiro</h2>
+        <p>Se você sentiu medo nessa relação e precisa de apoio, o <a href="tel:180">Ligue 180</a> oferece orientação gratuita no Brasil. Em caso de perigo imediato, ligue <a href="tel:190">190</a>.</p>
+      </aside>
+    ` : ''}
+
     <section id="oferta" class="offer result-card" aria-labelledby="offer-title" tabindex="-1">
       <h2 id="offer-title">O que vem no guia</h2>
       <ul class="guide-includes">
@@ -229,11 +234,15 @@ function renderResult(goal) {
         <li>Mensagens prontas para quando a pessoa te procura</li>
         <li>Modelos e exercícios para imprimir</li>
       </ul>
+      ${ORDER_BUMP_ENABLED ? `
+        <label class="order-bump"><input type="checkbox" id="lunar-order-bump"> Adicionar Calendário Lunar de 30 dias por WhatsApp — R$ 19</label>
+      ` : ''}
       ${cta}
       <p class="note">${offer.guarantee}</p>
       <p class="note" id="offer-status" role="status"></p>
     </section>
     <button class="back" data-restart type="button">Refazer o quiz</button>
+    <div class="sticky-offer">${cta}</div>
   `);
   if (phrase) document.querySelector('#phrase-result').textContent = phrase;
   phrase = '';
@@ -243,6 +252,13 @@ function renderResult(goal) {
   duration = undefined;
   contact = undefined;
   track('resultado', { perfil: profile, perfil_secundario: secondary, meta: goal.id });
+  offerObserver?.disconnect();
+  offerObserver = new IntersectionObserver(([entry], observer) => {
+    if (!entry.isIntersecting) return;
+    track('scroll_cta');
+    observer.disconnect();
+  }, { rootMargin: '0px 0px -86px 0px' });
+  offerObserver.observe(document.querySelector('#oferta [data-offer]'));
 }
 
 screen.addEventListener('click', event => {
@@ -286,6 +302,26 @@ screen.addEventListener('click', event => {
     return;
   }
 
+  if (button.dataset.ritual) {
+    const action = button.dataset.ritual;
+    track(action);
+    if (action === 'virar_carta') {
+      document.querySelector('.ritual-card').classList.add('revealed');
+      const copy = document.querySelector('#ritual-card-copy');
+      copy.hidden = false;
+      button.hidden = true;
+      copy.querySelector('h3').focus({ preventScroll: true });
+    } else {
+      const status = document.querySelector('.ritual-status');
+      saveRitualImage(currentRitual, action === 'salvar_carta').then(() => {
+        status.textContent = 'Sua imagem está pronta para compartilhar.';
+      }).catch(() => {
+        status.textContent = 'Não foi possível salvar a imagem. Tente novamente.';
+      });
+    }
+    return;
+  }
+
   if (button.hasAttribute('data-offer')) {
     track('clique_cta');
     if (offer.checkoutUrl) {
@@ -300,6 +336,8 @@ screen.addEventListener('click', event => {
   }
 
   if (button.hasAttribute('data-restart')) {
+    offerObserver?.disconnect();
+    currentRitual = undefined;
     position = -1;
     choices = [];
     checkoutStarted = false;

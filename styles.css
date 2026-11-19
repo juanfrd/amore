@@ -258,13 +258,6 @@ footer summary { cursor: pointer; }
   background: #fffaf3;
 }
 .result-card h2 { margin-bottom: 10px; }
-.sticky-offer {
-  position: sticky;
-  z-index: 2;
-  top: 0;
-  padding-block: 8px;
-  background: #f6efe6;
-}
 .sticky-offer .primary, #oferta .primary { width: 100%; justify-content: center; text-align: center; }
 .cycle-map { text-align: center; }
 .cycle-map h2 { text-transform: uppercase; font: 700 .9rem system-ui, sans-serif; letter-spacing: .12em; margin-bottom: 18px; }
@@ -352,3 +345,80 @@ footer summary { cursor: pointer; }
 .feedback-art .knot-free { animation-duration: .65s; animation-delay: .94s; }
 .feedback-art .heart-left, .feedback-art .heart-right { animation-duration: .65s; animation-delay: .85s; }
 .feedback-art .heart-crack { animation-duration: .7s, .55s; animation-delay: 0s, .85s; }
+
+.layout:has(.result) { padding-bottom: 100px; }
+body:has(.result) footer { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+#screen > .sticky-offer {
+  position: fixed;
+  inset: auto 0 0;
+  display: grid;
+  place-items: center;
+  padding: 8px 4% calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  z-index: 5;
+  background: #f6efe6;
+  animation: none;
+}
+.sticky-offer .primary { max-width: 590px; }
+#oferta { scroll-margin-top: 16px; scroll-margin-bottom: 92px; }
+.order-bump { display: block; margin-block: 10px 16px; }
+.cycle-map { padding-block: 13px; }
+.cycle-map h2 { margin-bottom: 10px; }
+.cycle-return { height: 9px; margin-bottom: 6px; }
+
+.ritual-bridge { text-align: center; margin: 35px 0 14px; font: italic 1.25rem Georgia, serif; }
+#screen > .ritual-bridge { animation-duration: .8s; }
+.ritual {
+  --gold: #efd198;
+  padding: clamp(15px, 4vw, 28px);
+  color: #f8ebcd;
+  background: radial-gradient(ellipse at 50% 0, #233451, #131e36 72%);
+  border-radius: 13px;
+  text-align: center;
+}
+.ritual h2, .ritual h3 { color: var(--gold); }
+.ritual h3 { font: 1.4rem Georgia, serif; margin: 8px 0; }
+.ritual-step {
+  margin-block: 12px;
+  padding: 0 12px;
+  border: 1px solid #63708a;
+  border-radius: 9px;
+}
+.ritual-step[open] { padding-bottom: 14px; }
+.ritual-step summary { min-height: 45px; padding: 9px 0; cursor: pointer; color: var(--gold); }
+.ritual-card { perspective: 850px; width: min(166px, 60%); margin: 4px auto 16px; }
+.ritual-card-turn { display: grid; transform-style: preserve-3d; transition: transform .65s ease; }
+.ritual-card.revealed .ritual-card-turn { transform: rotateY(180deg); }
+.ritual-card-front, .ritual-card-back { grid-area: 1 / 1; backface-visibility: hidden; }
+.ritual-card-front { transform: rotateY(180deg); }
+.ritual-card svg { display: block; width: 100%; }
+.ritual-action {
+  padding: 9px 14px;
+  min-height: 44px;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  color: #162039;
+  background: var(--gold);
+}
+.ritual-action:hover { background: #ffe6b4; }
+.ritual-action[hidden] { display: none; }
+.ritual-today svg { width: min(150px, 65%); }
+.ritual-calendar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 8px;
+  border: 1px solid #ab9468;
+  border-radius: 9px;
+}
+.ritual-calendar li { padding: 8px 4px; border: 1px solid #63708a; border-radius: 5px; overflow-wrap: anywhere; }
+.ritual-calendar svg { width: 52px; max-width: 100%; }
+.ritual-calendar h3 { font-size: 1.05rem; }
+.ritual-calendar p { margin-bottom: 6px; font-size: .8rem; }
+.ritual-calendar .ritual-dates { font-size: .72rem; }
+.ritual-disclaimer, .ritual-status { font-size: .8rem; margin: 12px 0 0; }
+.ritual-status:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ritual-card-turn { transition: none; }
+}
