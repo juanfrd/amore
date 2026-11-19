@@ -3,20 +3,24 @@
 const screen = document.querySelector('#screen');
 const intro = screen.innerHTML;
 const analysisSteps = [
-  'Analisando suas respostas…',
-  'Identificando seu padrão…',
-  'Montando seu plano personalizado…',
+  'Lendo suas respostas…',
+  'Juntando as peças…',
+  'Montando seu resultado…',
 ];
-const totalQuestions = intake.length + questions.length + 1;
-const goalIndex = totalQuestions - 1;
+const steps = [...intake, ...questions.slice(0, 3), { key: 'phrase' }, ...questions.slice(3), { key: 'goal' }];
+const totalQuestions = steps.length;
 let position = -1;
 let activeScreen = 'inicio';
 let choices = [];
-let votes = [];
+let responses = [];
+let preferredPronouns = pronouns[2];
+let duration;
+let contact;
+let phrase = '';
 let showSupport = false;
 let checkoutStarted = false;
 let feedbackTimer;
-const feedbackDuration = 7000;
+const feedbackDuration = 2000;
 
 // Eventos anônimos disponíveis para uma integração de analytics.
 // Nenhuma resposta individual, identificador ou dado de contato é incluído.
@@ -42,39 +46,55 @@ function randomPair(items) {
   return [first, pick(items.filter(item => item !== first))];
 }
 
+function personalize(text) {
+  return text.replace(/\{(ele|Ele|dele)\}/g, (_, key) => preferredPronouns[key]);
+}
+
 function renderQuestion() {
   position += 1;
   const progress = 15 + Math.round(85 * position / totalQuestions);
-  const initial = intake[position];
-  const question = questions[position - intake.length];
-  let title;
-
-  if (initial) {
-    title = initial.title;
-    choices = initial.options.map(label => ({ label }));
-  } else if (question) {
-    title = question.title;
-    choices = randomPair(Object.keys(question.answers)).map(profile => ({
-      label: pick(question.answers[profile]), profile, art: profile,
-    }));
-  } else {
-    title = 'O que você mais quer entender agora?';
-    choices = randomPair(goals);
-  }
-
-  show('pergunta_' + (position + 1), 'question', `
+  const step = steps[position];
+  const header = `
     <p class="step">Pergunta ${position + 1} de ${totalQuestions}</p>
     <progress aria-label="Progresso do quiz" value="${progress}" max="100"></progress>
-    <h1 id="title" tabindex="-1">${title}</h1>
-    <div class="options ${initial ? 'intake' : 'cards'}">
-      ${choices.map((choice, index) => `
-        <button class="option ${choice.art ? 'art-' + choice.art : ''}" data-answer="${index}" type="button">
-          ${choice.art ? '<span class="option-art" aria-hidden="true"></span>' : ''}
-          <span>${choice.label}</span>
-        </button>
-      `).join('')}
-    </div>
-  `);
+  `;
+
+  if (step.key === 'phrase') {
+    show('frase_opcional', 'question', `
+      ${header}
+      <h1 id="title" tabindex="-1">${personalize('Se você resumisse em uma frase o que {ele} mais dizia depois das brigas, qual seria?')}</h1>
+      <form id="phrase-form">
+        <label class="step" for="phrase">Resposta opcional · Até 100 caracteres</label>
+        <textarea id="phrase" maxlength="100" rows="3"></textarea>
+        <button type="submit" class="primary">Continuar</button>
+        <button type="button" class="back" data-skip-phrase>Pular</button>
+      </form>
+    `);
+  } else {
+    const title = step.title ?? 'O que você mais precisa entender agora?';
+    if (step.options) {
+      choices = step.options.map(label => ({ label }));
+    } else if (step.answers) {
+      choices = randomPair(Object.keys(step.answers)).map(profile => ({
+        ...pick(step.answers[profile]), profile, art: profile,
+      }));
+    } else {
+      choices = randomPair(goals);
+    }
+
+    show('pergunta_' + (position + 1), 'question', `
+      ${header}
+      <h1 id="title" tabindex="-1">${personalize(title)}</h1>
+      <div class="options ${step.options ? 'intake' : 'cards'}">
+        ${choices.map((choice, index) => `
+          <button class="option ${choice.art ? 'art-' + choice.art : ''}" data-answer="${index}" type="button">
+            ${choice.art ? '<span class="option-art" aria-hidden="true"></span>' : ''}
+            <span>${personalize(choice.label)}</span>
+          </button>
+        `).join('')}
+      </div>
+    `);
+  }
   track('visualizacao');
 }
 
@@ -84,14 +104,14 @@ function finishFeedback() {
   renderQuestion();
 }
 
-function renderFeedback(question) {
-  const index = position - intake.length;
+function renderFeedback(choice) {
+  const index = responses.length - 1;
   const scene = feedbackSequence[index];
   show('feedback_' + (index + 1), 'feedback', `
     <svg class="feedback-art" viewBox="0 0 210 165" aria-hidden="true" focusable="false">
       ${feedbackScenes[scene]}
     </svg>
-    <h1 id="title" tabindex="-1">${question.feedback}</h1>
+    <h1 id="title" tabindex="-1">${personalize(choice.reaction)}</h1>
     <button class="primary" data-continue type="button">Continuar <span aria-hidden="true">→</span></button>
   `);
   track('visualizacao');
@@ -120,14 +140,16 @@ function renderAnalysis(goal) {
 
 function renderResult(goal) {
   const counts = Object.fromEntries(Object.keys(profiles).map(profile => [
-    profile, votes.filter(vote => vote === profile).length,
+    profile, responses.filter(response => response.profile === profile).length,
   ]));
-  const highest = Math.max(...Object.values(counts));
-  const profile = votes.find(vote => counts[vote] === highest);
+  const answerOrder = new Set(responses.map(response => response.profile));
+  // Para o segundo perfil sem votos, use a primeira alternativa exibida.
+  responses.forEach(response => answerOrder.add(response.alternative));
+  const [profile, secondary] = [...answerOrder].sort((a, b) => counts[b] - counts[a]);
   const result = profiles[profile];
   const showSafety = showSupport;
   showSupport = false;
-  votes = [];
+  const [first, second, , , fifth] = responses;
 
   const details = resultDetails[profile];
   const cta = `<button class="primary" data-offer type="button">Quero o guia completo — ${offer.price}</button>`;
@@ -135,6 +157,24 @@ function renderResult(goal) {
     <p class="step">Seu resultado</p>
     <h1 id="title" tabindex="-1">${result.title}</h1>
     <p>${result.summary}</p>
+    <section class="result-card" aria-labelledby="reflection-title">
+      <h2 id="reflection-title">O que você me contou</h2>
+      <p>Você disse que volta quando “${personalize(first.label)}”. Que o que mais pesa é “${personalize(second.label)}”. E que o que mais te faz duvidar é “${personalize(fifth.label)}”.</p>
+      <p>${durationCopy[duration]}</p>
+      <p>${contactCopy[contact]}</p>
+      <h3>Como seu perfil se mistura</h3>
+      <p>${profileMix[profile + '+' + secondary]}</p>
+    </section>
+    ${phrase ? `
+      <section class="result-card" aria-labelledby="phrase-title">
+        <h2 id="phrase-title">Você escreveu</h2>
+        <p>“<span id="phrase-result"></span>”. Guarde essa frase: no capítulo “${result.title}” você vai usá-la num exercício.</p>
+      </section>
+    ` : ''}
+    <section class="result-card" aria-labelledby="goal-title">
+      <h2 id="goal-title">Seu objetivo</h2>
+      <p>Você quer entender: “${personalize(goal.label)}”. Seu guia começa por aí: capítulo “${goal.chapter}”.</p>
+    </section>
     ${showSafety ? `
       <aside class="support" aria-labelledby="support-title">
         <h2 id="support-title">Sua segurança vem primeiro</h2>
@@ -155,7 +195,7 @@ function renderResult(goal) {
     <section class="result-card story" aria-labelledby="story-title">
       <p class="step">História inspirada em situações reais. Nome alterado.</p>
       <h2 id="story-title">A história de ${details.name}</h2>
-      <p>${details.story.replace('{page}', details.page)}</p>
+      <p>${personalize(details.story).replace('{page}', details.page)}</p>
       <a href="#oferta">Ver como ela saiu →</a>
     </section>
 
@@ -195,7 +235,14 @@ function renderResult(goal) {
     </section>
     <button class="back" data-restart type="button">Refazer o quiz</button>
   `);
-  track('resultado', { perfil: profile, meta: goal.id });
+  if (phrase) document.querySelector('#phrase-result').textContent = phrase;
+  phrase = '';
+  responses = [];
+  choices = [];
+  preferredPronouns = pronouns[2];
+  duration = undefined;
+  contact = undefined;
+  track('resultado', { perfil: profile, perfil_secundario: secondary, meta: goal.id });
 }
 
 screen.addEventListener('click', event => {
@@ -213,15 +260,25 @@ screen.addEventListener('click', event => {
     return;
   }
 
-  if (button.hasAttribute('data-answer')) {
-    const choice = choices[Number(button.dataset.answer)];
-    const question = questions[position - intake.length];
+  if (button.hasAttribute('data-skip-phrase')) {
     track('avanco');
-    if (position === intake.length - 1) showSupport = choice.label === 'Sim';
-    if (question) {
-      votes.push(choice.profile);
-      renderFeedback(question);
-    } else if (position === goalIndex) {
+    renderQuestion();
+    return;
+  }
+
+  if (button.hasAttribute('data-answer')) {
+    const index = Number(button.dataset.answer);
+    const choice = choices[index];
+    const step = steps[position];
+    track('avanco');
+    if (step.key === 'pronoun') preferredPronouns = pronouns[index];
+    if (step.key === 'duration') duration = index;
+    if (step.key === 'contact') contact = index;
+    if (step.key === 'fear') showSupport = index === 0;
+    if (step.answers) {
+      responses.push({ ...choice, alternative: choices[1 - index].profile });
+      renderFeedback(choice);
+    } else if (step.key === 'goal') {
       renderAnalysis(choice);
     } else {
       renderQuestion();
@@ -248,6 +305,14 @@ screen.addEventListener('click', event => {
     checkoutStarted = false;
     show('inicio', '', intro);
   }
+});
+
+screen.addEventListener('submit', event => {
+  if (event.target.id !== 'phrase-form') return;
+  event.preventDefault();
+  phrase = document.querySelector('#phrase').value.slice(0, 100).trim();
+  track('avanco');
+  renderQuestion();
 });
 
 window.addEventListener('pagehide', () => {

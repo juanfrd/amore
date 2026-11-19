@@ -331,3 +331,24 @@ footer summary { cursor: pointer; }
 #oferta .note { text-align: center; margin-block: 8px 0; }
 #offer-status:empty { display: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+#phrase-form textarea {
+  display: block;
+  width: 100%;
+  margin: 6px 0 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf3;
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+#phrase-form .back { margin-inline-start: 12px; }
+#phrase-result { overflow-wrap: anywhere; }
+.feedback-art .traced { animation-duration: .9s; }
+.feedback-art .dove { animation-duration: .75s; animation-delay: .8s; }
+.feedback-art .knot-loop { animation-duration: .9s, .55s; animation-delay: 0s, .85s; }
+.feedback-art .knot-free { animation-duration: .65s; animation-delay: .94s; }
+.feedback-art .heart-left, .feedback-art .heart-right { animation-duration: .65s; animation-delay: .85s; }
+.feedback-art .heart-crack { animation-duration: .7s, .55s; animation-delay: 0s, .85s; }
