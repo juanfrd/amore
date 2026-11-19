@@ -422,3 +422,48 @@ body:has(.result) footer { padding-bottom: calc(92px + env(safe-area-inset-botto
 @media (prefers-reduced-motion: reduce) {
   .ritual-card-turn { transition: none; }
 }
+
+.result-atmosphere { display: none; }
+body:has(.result) { isolation: isolate; color: #f9ede5; background: #171529; }
+body:has(.result) .result-atmosphere {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.result-atmosphere > div {
+  position: absolute;
+  inset: -8% -2%;
+  transform: translate3d(0, var(--result-drift, 0%), 0);
+  filter: blur(4px);
+  background: url("resultado-amore.webp") center 44% / cover no-repeat;
+}
+.result-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 42%, #171529dc, #17152992 60%, #17152955),
+              linear-gradient(180deg, #17152970, transparent 36%, transparent 77%, #17152990);
+}
+body:has(.result) .masthead, body:has(.result) footer { border-color: #f9e4cc45; }
+body:has(.result) .masthead span { color: #efbd91; }
+body:has(.result) footer, .result > .step { color: #eed8ce; }
+.result > .back { color: #f5cfad; }
+.result-card, .result .support { color: #30221f; }
+.result .ritual { border: 1px solid #efd19855; }
+#screen > .sticky-offer { background: #1b172c; border-color: #f9e4cc45; }
+
+@media (max-width: 700px) {
+  .result-atmosphere > div {
+    inset-inline: -3%;
+    background-position: center 42%;
+    background-size: 106% auto;
+    mask-image: linear-gradient(transparent 9%, #000 26%, #000 65%, transparent 88%);
+    filter: blur(3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-atmosphere > div { transform: none; }
+}

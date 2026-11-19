@@ -22,6 +22,7 @@ let checkoutStarted = false;
 let feedbackTimer;
 let currentRitual;
 let offerObserver;
+let stopResultParallax;
 const feedbackDuration = 2000;
 
 // Eventos anônimos disponíveis para uma integração de analytics.
@@ -259,6 +260,38 @@ function renderResult(goal) {
     observer.disconnect();
   }, { rootMargin: '0px 0px -86px 0px' });
   offerObserver.observe(document.querySelector('#oferta [data-offer]'));
+  stopResultParallax?.();
+  stopResultParallax = startResultParallax();
+}
+
+function startResultParallax() {
+  const layer = document.querySelector('.result-atmosphere');
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let frame = 0;
+
+  function draw() {
+    frame = 0;
+    const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = scrollRange > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollRange)) : 0;
+    layer.style.setProperty('--result-drift', motion.matches ? '0%' : (4 - 8 * progress) + '%');
+  }
+
+  function scheduleDraw() {
+    if (!frame) frame = window.requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('scroll', scheduleDraw, { passive: true });
+  window.addEventListener('resize', scheduleDraw);
+  motion.addEventListener('change', scheduleDraw);
+  draw();
+
+  return () => {
+    window.removeEventListener('scroll', scheduleDraw);
+    window.removeEventListener('resize', scheduleDraw);
+    motion.removeEventListener('change', scheduleDraw);
+    window.cancelAnimationFrame(frame);
+    layer.style.removeProperty('--result-drift');
+  };
 }
 
 screen.addEventListener('click', event => {
@@ -337,6 +370,8 @@ screen.addEventListener('click', event => {
 
   if (button.hasAttribute('data-restart')) {
     offerObserver?.disconnect();
+    stopResultParallax?.();
+    stopResultParallax = undefined;
     currentRitual = undefined;
     position = -1;
     choices = [];
