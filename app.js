@@ -1,148 +1,196 @@
-// Preencha com o link público do checkout quando o PDF estiver à venda.
-const checkoutUrl = '';
-
-const questions = [
-  {
-    title: 'Depois de uma briga, o que mais faz você querer voltar?',
-    options: [
-      { pattern: 'hope', label: 'A promessa de mudança' },
-      { pattern: 'connection', label: 'A saudade da companhia' },
-    ],
-  },
-  {
-    title: 'O que mais pesa quando você pensa em se afastar?',
-    options: [
-      { pattern: 'connection', label: 'Ficar sem aquela companhia' },
-      { pattern: 'guilt', label: 'Sentir que estou magoando a outra pessoa' },
-    ],
-  },
-  {
-    title: 'O que faz você repensar um limite que colocou?',
-    options: [
-      { pattern: 'guilt', label: 'Pensar que fui longe demais' },
-      { pattern: 'hope', label: 'Achar que agora vai ser diferente' },
-    ],
-  },
-  {
-    title: 'Quando vocês ficam sem se falar, o que passa pela sua cabeça?',
-    options: [
-      { pattern: 'hope', label: 'Talvez ainda dê para mudar' },
-      { pattern: 'connection', label: 'Sinto falta da nossa rotina' },
-    ],
-  },
-  {
-    title: 'O que torna mais difícil manter sua decisão?',
-    options: [
-      { pattern: 'guilt', label: 'Pensar que tudo foi culpa minha' },
-      { pattern: 'connection', label: 'Sentir falta de ter alguém por perto' },
-    ],
-  },
-  {
-    title: 'O que você mais quer entender agora?',
-    options: [
-      { pattern: 'hope', label: 'Como reconhecer uma mudança de verdade' },
-      { pattern: 'guilt', label: 'Como colocar limites sem tanta culpa' },
-    ],
-  },
-];
-
-const results = {
-  hope: {
-    title: 'A esperança de que a relação mude',
-    summary: 'Pelas suas respostas, as promessas e os momentos de reconciliação parecem pesar quando você pensa em tentar de novo.',
-    step: 'Lembre de uma promessa que você já ouviu mais de uma vez. O que mudou na prática? Por quanto tempo?',
-  },
-  connection: {
-    title: 'A saudade da conexão',
-    summary: 'Pelas suas respostas, sentir falta da companhia e da rotina de vocês pode tornar mais difícil manter a distância.',
-    step: 'Pense em alguém de confiança com quem você pode conversar quando bater a saudade.',
-  },
-  guilt: {
-    title: 'A culpa ao colocar limites',
-    summary: 'Pelas suas respostas, você pode acabar assumindo mais responsabilidade do que cabe a você quando tenta colocar um limite.',
-    step: 'Lembre de um limite que você tentou colocar. O que você queria proteger naquele momento?',
-  },
-};
+'use strict';
 
 const screen = document.querySelector('#screen');
 const intro = screen.innerHTML;
-const answers = [];
-let current = -1;
+const analysisSteps = [
+  'Analisando suas respostas…',
+  'Identificando seu padrão…',
+  'Montando seu plano personalizado…',
+];
+const totalQuestions = intake.length + questions.length + 1;
+const goalIndex = totalQuestions - 1;
+let position = -1;
+let activeScreen = 'inicio';
+let choices = [];
+let votes = [];
+let showSupport = false;
+let checkoutStarted = false;
 
-function render() {
-  screen.className = '';
-  if (current < 0) {
-    screen.innerHTML = intro;
-  } else if (current < questions.length) {
-    const question = questions[current];
-    screen.className = 'question';
-    screen.innerHTML = `
-      <p class="step">Pergunta ${current + 1} de ${questions.length}</p>
-      <progress aria-label="Perguntas respondidas" value="${current}" max="${questions.length}"></progress>
-      <h1 id="title" tabindex="-1">${question.title}</h1>
-      <div class="options">
-        ${question.options.map(({ pattern, label }) => `
-          <button class="option ${pattern}${answers[current] === pattern ? ' selected' : ''}" data-answer="${pattern}" type="button">
-            <span class="option-art" aria-hidden="true"></span>
-            <span>${label}</span>
-          </button>
-        `).join('')}
-      </div>
-      <button class="back" data-back type="button">← Voltar</button>
-    `;
+// Eventos anônimos disponíveis para uma integração de analytics.
+// Nenhuma resposta individual, identificador ou dado de contato é incluído.
+const analytics = window.dataLayer ??= [];
+function track(event, detail = {}) {
+  analytics.push({ event: 'amore_' + event, tela: activeScreen, ...detail });
+}
+
+function show(id, className, markup) {
+  activeScreen = id;
+  screen.className = className;
+  screen.innerHTML = markup;
+  document.querySelector('#title').focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+}
+
+function pick(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function randomPair(items) {
+  const first = pick(items);
+  return [first, pick(items.filter(item => item !== first))];
+}
+
+function renderQuestion() {
+  position += 1;
+  const progress = 15 + Math.round(85 * position / totalQuestions);
+  const initial = intake[position];
+  const question = questions[position - intake.length];
+  let title;
+
+  if (initial) {
+    title = initial.title;
+    choices = initial.options.map(label => ({ label }));
+  } else if (question) {
+    title = question.title;
+    choices = randomPair(Object.keys(question.answers)).map(profile => ({
+      label: pick(question.answers[profile]), profile, art: profile,
+    }));
   } else {
-    const scores = Object.fromEntries(Object.keys(results).map(pattern => [
-      pattern, answers.filter(answer => answer === pattern).length,
-    ]));
-    const highest = Math.max(...Object.values(scores));
-    const pattern = [...answers].reverse().find(answer => scores[answer] === highest);
-    const result = results[pattern];
-
-    screen.className = 'result';
-    screen.innerHTML = `
-      <p class="step">Seu resultado</p>
-      <h1 id="title" tabindex="-1">${result.title}</h1>
-      <p>${result.summary}</p>
-      <p><strong>Um primeiro passo.</strong> ${result.step}</p>
-      <div class="offer">
-        <h2>Seu mapa para sair do ciclo</h2>
-        <p>Um guia em PDF com exercícios para entender o que faz você voltar e planejar seus próximos passos.</p>
-        <button class="primary" data-offer aria-expanded="false" aria-controls="offer-status" type="button">Quero descobrir meu mapa <span aria-hidden="true">↗</span></button>
-        <p class="note" id="offer-status" role="status" hidden></p>
-      </div>
-      <button class="back" data-back type="button">← Rever minha última resposta</button>
-      <button class="back" data-restart type="button">Recomeçar</button>
-    `;
+    title = 'O que você mais quer entender agora?';
+    choices = randomPair(goals);
   }
-  document.querySelector('#title').focus();
+
+  show('pergunta_' + (position + 1), 'question', `
+    <p class="step">Pergunta ${position + 1} de ${totalQuestions}</p>
+    <progress aria-label="Progresso do quiz" value="${progress}" max="100"></progress>
+    <h1 id="title" tabindex="-1">${title}</h1>
+    <div class="options ${initial ? 'intake' : 'cards'}">
+      ${choices.map((choice, index) => `
+        <button class="option ${choice.art ? 'art-' + choice.art : ''}" data-answer="${index}" type="button">
+          ${choice.art ? '<span class="option-art" aria-hidden="true"></span>' : ''}
+          <span>${choice.label}</span>
+        </button>
+      `).join('')}
+    </div>
+  `);
+  track('visualizacao');
+}
+
+function renderFeedback(question) {
+  show('feedback_' + (position - intake.length + 1), 'feedback', `
+    <span class="feedback-mark" aria-hidden="true">✦</span>
+    <h1 id="title" tabindex="-1">${question.feedback}</h1>
+  `);
+  track('visualizacao');
+  window.setTimeout(renderQuestion, 1500);
+}
+
+function renderAnalysis(goal) {
+  show('analise', 'analysis', `
+    <h1 id="title" tabindex="-1">Seu resultado está a caminho</h1>
+    <progress aria-label="Progresso da análise" value="1" max="3"></progress>
+    <ol class="analysis-list" aria-live="polite">
+      ${analysisSteps.map((step, index) => `<li ${index ? 'hidden' : ''}>${step}</li>`).join('')}
+    </ol>
+  `);
+  track('visualizacao');
+  const progress = screen.querySelector('progress');
+  const steps = screen.querySelectorAll('li');
+  [1, 2].forEach(index => {
+    window.setTimeout(() => {
+      steps[index].hidden = false;
+      progress.value = index + 1;
+    }, index * 1400);
+  });
+  window.setTimeout(() => renderResult(goal), 4500);
+}
+
+function renderResult(goal) {
+  const counts = Object.fromEntries(Object.keys(profiles).map(profile => [
+    profile, votes.filter(vote => vote === profile).length,
+  ]));
+  const highest = Math.max(...Object.values(counts));
+  const profile = votes.find(vote => counts[vote] === highest);
+  const result = profiles[profile];
+  const showSafety = showSupport;
+  showSupport = false;
+  votes = [];
+
+  const cta = `<button class="primary" data-offer type="button">Quero meu plano de 30 dias <span aria-hidden="true">↗</span></button>`;
+  const offerDetails = [offer.price, offer.guarantee].filter(Boolean).join(' · ');
+  show('resultado', 'result', `
+    <p class="step">Seu resultado</p>
+    <h1 id="title" tabindex="-1">${result.title}</h1>
+    <p>${result.summary}</p>
+    ${showSafety ? `
+      <aside class="support" aria-labelledby="support-title">
+        <h2 id="support-title">Sua segurança vem primeiro</h2>
+        <p>Se você sentiu medo nessa relação e precisa de apoio, o <a href="tel:180">Ligue 180</a> oferece orientação gratuita no Brasil. Em caso de perigo imediato, ligue <a href="tel:190">190</a>.</p>
+      </aside>
+    ` : ''}
+    <section class="offer" aria-labelledby="offer-title">
+      <h2 id="offer-title">Seu plano para sair do ciclo</h2>
+      <p>${result.hook}</p>
+      ${cta}
+      ${offerDetails ? `<p class="note">${offerDetails}</p>` : ''}
+      <div class="chapter">
+        <p class="step">Capítulo recomendado para sua meta</p>
+        <h3>${goal.chapter}</h3>
+        <p>Para ajudar você a explorar: ${goal.label.toLowerCase()}.</p>
+      </div>
+      ${cta}
+      <p class="note" id="offer-status" role="status"></p>
+    </section>
+    <button class="back" data-restart type="button">Refazer o quiz</button>
+  `);
+  track('resultado', { perfil: profile, meta: goal.id });
 }
 
 screen.addEventListener('click', event => {
   const button = event.target.closest('button');
   if (!button) return;
 
-  if (button.hasAttribute('data-offer')) {
-    if (checkoutUrl) {
-      window.location.assign(checkoutUrl);
+  if (button.id === 'start') {
+    track('inicio');
+    renderQuestion();
+    return;
+  }
+
+  if (button.hasAttribute('data-answer')) {
+    const choice = choices[Number(button.dataset.answer)];
+    const question = questions[position - intake.length];
+    track('avanco');
+    if (position === intake.length - 1) showSupport = choice.label === 'Sim';
+    if (question) {
+      votes.push(choice.profile);
+      renderFeedback(question);
+    } else if (position === goalIndex) {
+      renderAnalysis(choice);
     } else {
-      const status = document.querySelector('#offer-status');
-      status.hidden = false;
-      status.textContent = 'O PDF estará disponível em breve.';
-      button.setAttribute('aria-expanded', 'true');
+      renderQuestion();
+    }
+    return;
+  }
+
+  if (button.hasAttribute('data-offer')) {
+    track('clique_cta');
+    if (offer.checkoutUrl) {
+      checkoutStarted = true;
+      window.location.assign(offer.checkoutUrl);
+    } else {
+      document.querySelector('#offer-status').textContent = 'O checkout estará disponível em breve.';
     }
     return;
   }
 
   if (button.hasAttribute('data-restart')) {
-    answers.length = 0;
-    current = -1;
-  } else if (button.hasAttribute('data-back')) {
-    current -= 1;
-  } else {
-    if (button.hasAttribute('data-answer')) {
-      answers[current] = button.dataset.answer;
-    }
-    current += 1;
+    position = -1;
+    choices = [];
+    checkoutStarted = false;
+    show('inicio', '', intro);
   }
-  render();
+});
+
+window.addEventListener('pagehide', () => {
+  if (position >= 0 && !checkoutStarted) track('abandono');
 });
