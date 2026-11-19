@@ -15,6 +15,8 @@ let choices = [];
 let votes = [];
 let showSupport = false;
 let checkoutStarted = false;
+let feedbackTimer;
+const feedbackDuration = 7000;
 
 // Eventos anônimos disponíveis para uma integração de analytics.
 // Nenhuma resposta individual, identificador ou dado de contato é incluído.
@@ -76,13 +78,24 @@ function renderQuestion() {
   track('visualizacao');
 }
 
+function finishFeedback() {
+  window.clearTimeout(feedbackTimer);
+  feedbackTimer = undefined;
+  renderQuestion();
+}
+
 function renderFeedback(question) {
-  show('feedback_' + (position - intake.length + 1), 'feedback', `
-    <span class="feedback-mark" aria-hidden="true">✦</span>
+  const index = position - intake.length;
+  const scene = feedbackSequence[index];
+  show('feedback_' + (index + 1), 'feedback', `
+    <svg class="feedback-art" viewBox="0 0 210 165" aria-hidden="true" focusable="false">
+      ${feedbackScenes[scene]}
+    </svg>
     <h1 id="title" tabindex="-1">${question.feedback}</h1>
+    <button class="primary" data-continue type="button">Continuar <span aria-hidden="true">→</span></button>
   `);
   track('visualizacao');
-  window.setTimeout(renderQuestion, 1500);
+  feedbackTimer = window.setTimeout(finishFeedback, feedbackDuration);
 }
 
 function renderAnalysis(goal) {
@@ -153,6 +166,11 @@ screen.addEventListener('click', event => {
   if (button.id === 'start') {
     track('inicio');
     renderQuestion();
+    return;
+  }
+
+  if (button.hasAttribute('data-continue')) {
+    finishFeedback();
     return;
   }
 

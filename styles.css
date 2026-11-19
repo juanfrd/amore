@@ -195,7 +195,42 @@ footer { padding: 20px 0; border-top: 1px solid var(--line); }
 #screen > * { animation: enter .24s ease-out both; }
 .feedback, .analysis { min-height: 285px; display: grid; align-content: center; }
 .feedback h1, .analysis h1 { font-size: clamp(31px, 6vw, 48px); }
-.feedback-mark { font: 2.5rem Georgia, serif; color: var(--accent); margin-bottom: 12px; }
+.feedback { justify-items: center; text-align: center; }
+.feedback-art {
+  width: min(220px, 62vw);
+  height: auto;
+  overflow: visible;
+  margin-bottom: 20px;
+  color: var(--accent);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.feedback-art .traced {
+  stroke-dasharray: 1;
+  animation: trace 2.1s ease-in-out both;
+}
+.feedback-art .dove { animation: lift 1.6s 1.9s ease-out both; }
+.feedback-art .accent-line { opacity: .55; }
+.feedback-art .knot-loop {
+  animation: trace 2.1s ease-in-out both, erase-knot 1.25s 2.05s ease-in-out forwards;
+}
+.feedback-art .knot-free { stroke-dasharray: 1; animation: trace 1.45s 2.25s ease-in-out both; }
+.feedback-art .heart-left { animation: join-heart 1.25s 1.95s ease-out both; --heart-offset: -10px; }
+.feedback-art .heart-right { animation: join-heart 1.25s 1.95s ease-out both; --heart-offset: 10px; }
+.feedback-art .heart-crack { animation: trace 1.5s ease-in-out both, heal 1.15s 1.95s ease-out forwards; }
+
+@keyframes trace { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes lift { to { transform: translate(13px, -14px); } }
+@keyframes erase-knot { to { stroke-dashoffset: -1; } }
+@keyframes join-heart { from { transform: translateX(var(--heart-offset)); } to { transform: translateX(0); } }
+@keyframes heal { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .feedback .feedback-art * { animation: none; }
+  .feedback-art .knot-loop, .feedback-art .heart-crack { visibility: hidden; }
+}
 .analysis-list { margin: 0; padding-inline-start: 22px; }
 .analysis-list li { margin-bottom: 9px; animation: enter .24s ease-out both; }
 .support { padding: 14px 16px; background: #f9e6bd; border-radius: 8px; }
