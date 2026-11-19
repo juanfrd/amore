@@ -302,18 +302,14 @@ footer summary { cursor: pointer; }
 .result-card a { color: var(--accent); font-weight: 650; }
 .preview-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); gap: 14px; align-items: start; margin-bottom: 16px; }
 .guide-cover {
-  display: grid;
-  align-content: space-between;
-  min-height: 158px;
-  aspect-ratio: 3 / 4;
-  padding: clamp(8px, 3vw, 20px);
-  background: radial-gradient(ellipse at 72% 30%, #ad6257, #6f3032);
-  border-radius: 3px 9px 9px 3px;
-  border-left: 4px solid #4f2527;
-  color: #fff7eb;
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
-.guide-cover strong { font: clamp(16px, 4.3vw, 31px)/1.05 Georgia, serif; }
-.guide-cover span { font-size: clamp(.64rem, 2.7vw, .8rem); }
+@media (max-width: 480px) {
+  .preview-layout { grid-template-columns: minmax(0, 1fr); }
+}
 .preview h3 { margin: 0 0 8px; font: 1.25rem Georgia, serif; }
 .guide-index, .guide-includes { padding-inline-start: 20px; }
 .guide-index { padding: 0; list-style: none; margin: 0; font-size: clamp(.68rem, 2.75vw, .9rem); }

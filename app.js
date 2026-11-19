@@ -192,11 +192,7 @@ function renderResult(goal) {
     <section class="result-card preview" aria-labelledby="preview-title">
       <h2 id="preview-title">Por dentro do guia</h2>
       <div class="preview-layout">
-        <div class="guide-cover">
-          <span>amore.</span>
-          <strong>Seu mapa para sair do ciclo</strong>
-          <span>Um plano de 30 dias</span>
-        </div>
+        <img class="guide-cover" src="guia-amore.webp" alt="Capa do guia Amore: O amor não deveria doer" width="1254" height="1254" loading="lazy">
         <div>
           <h3>Índice</h3>
           <ul class="guide-index">
