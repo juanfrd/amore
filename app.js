@@ -129,8 +129,8 @@ function renderResult(goal) {
   showSupport = false;
   votes = [];
 
-  const cta = `<button class="primary" data-offer type="button">Quero meu plano de 30 dias <span aria-hidden="true">↗</span></button>`;
-  const offerDetails = [offer.price, offer.guarantee].filter(Boolean).join(' · ');
+  const details = resultDetails[profile];
+  const cta = `<button class="primary" data-offer type="button">Quero o guia completo — ${offer.price}</button>`;
   show('resultado', 'result', `
     <p class="step">Seu resultado</p>
     <h1 id="title" tabindex="-1">${result.title}</h1>
@@ -141,17 +141,56 @@ function renderResult(goal) {
         <p>Se você sentiu medo nessa relação e precisa de apoio, o <a href="tel:180">Ligue 180</a> oferece orientação gratuita no Brasil. Em caso de perigo imediato, ligue <a href="tel:190">190</a>.</p>
       </aside>
     ` : ''}
-    <section class="offer" aria-labelledby="offer-title">
-      <h2 id="offer-title">Seu plano para sair do ciclo</h2>
-      <p>${result.hook}</p>
-      ${cta}
-      ${offerDetails ? `<p class="note">${offerDetails}</p>` : ''}
-      <div class="chapter">
-        <p class="step">Capítulo recomendado para sua meta</p>
-        <h3>${goal.chapter}</h3>
-        <p>Para ajudar você a explorar: ${goal.label.toLowerCase()}.</p>
+    <div class="sticky-offer">${cta}</div>
+
+    <section class="cycle-map result-card" aria-labelledby="cycle-title">
+      <h2 id="cycle-title">Seu mapa do ciclo</h2>
+      <ol class="cycle-stages">
+        ${cycleStages.map(stage => `<li${stage === details.stage ? ' class="cycle-current" aria-current="step"' : ''}>${stage}</li>`).join('')}
+      </ol>
+      <div class="cycle-return" aria-hidden="true"></div>
+      <p>Você costuma voltar aqui. <strong>${details.stage}</strong></p>
+    </section>
+
+    <section class="result-card story" aria-labelledby="story-title">
+      <p class="step">História inspirada em situações reais. Nome alterado.</p>
+      <h2 id="story-title">A história de ${details.name}</h2>
+      <p>${details.story.replace('{page}', details.page)}</p>
+      <a href="#oferta">Ver como ela saiu →</a>
+    </section>
+
+    <section class="result-card preview" aria-labelledby="preview-title">
+      <h2 id="preview-title">Por dentro do guia</h2>
+      <div class="preview-layout">
+        <div class="guide-cover">
+          <span>amore.</span>
+          <strong>Seu mapa para sair do ciclo</strong>
+          <span>Um plano de 30 dias</span>
+        </div>
+        <div>
+          <h3>Índice</h3>
+          <ul class="guide-index">
+            ${Object.entries(resultDetails).sort(([, first], [, second]) => first.page - second.page).map(([key, chapter]) => key === profile
+              ? `<li class="chapter-current"><span aria-hidden="true">🔒</span> Seu capítulo: ${result.title} (pág. ${details.page})</li>`
+              : `<li class="chapter-locked"><span aria-hidden="true">${profiles[key].title} · ${chapter.page}</span><span class="sr-only">Capítulo bloqueado</span></li>`
+            ).join('')}
+          </ul>
+        </div>
       </div>
+      <a href="checklist-sinais-de-alerta.pdf" download>Baixar a amostra grátis (PDF) ↓</a>
+      <p class="step">Checklist de sinais de alerta · 1 página</p>
+    </section>
+
+    <section id="oferta" class="offer result-card" aria-labelledby="offer-title" tabindex="-1">
+      <h2 id="offer-title">O que vem no guia</h2>
+      <ul class="guide-includes">
+        <li>Guia digital com cerca de 28 páginas</li>
+        <li>Plano de 30 dias para sair do ciclo</li>
+        <li>Mensagens prontas para quando a pessoa te procura</li>
+        <li>Modelos e exercícios para imprimir</li>
+      </ul>
       ${cta}
+      <p class="note">${offer.guarantee}</p>
       <p class="note" id="offer-status" role="status"></p>
     </section>
     <button class="back" data-restart type="button">Refazer o quiz</button>
@@ -196,7 +235,9 @@ screen.addEventListener('click', event => {
       checkoutStarted = true;
       window.location.assign(offer.checkoutUrl);
     } else {
-      document.querySelector('#offer-status').textContent = 'O checkout estará disponível em breve.';
+      const status = document.querySelector('#offer-status');
+      status.textContent = 'O checkout estará disponível em breve.';
+      if (button.closest('.sticky-offer')) document.querySelector('#oferta').focus();
     }
     return;
   }

@@ -1,7 +1,7 @@
 'use strict';
 
 // Preencha com os dados reais da oferta antes de ativar o checkout.
-const offer = { checkoutUrl: '', price: '', guarantee: '' };
+const offer = { checkoutUrl: '', price: 'R$ 60', guarantee: 'Garantia de 7 dias' };
 
 const intake = [
   { title: 'Qual é a sua faixa etária?', options: ['18–24', '25–34', '35+'] },
