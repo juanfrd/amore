@@ -19,11 +19,9 @@ let contact;
 let phrase = '';
 let showSupport = false;
 let checkoutStarted = false;
-let feedbackTimer;
 let currentRitual;
 let offerObserver;
 let stopResultParallax;
-const feedbackDuration = 2000;
 
 // Eventos anônimos disponíveis para uma integração de analytics.
 // Nenhuma resposta individual, identificador ou dado de contato é incluído.
@@ -101,12 +99,6 @@ function renderQuestion() {
   track('visualizacao');
 }
 
-function finishFeedback() {
-  window.clearTimeout(feedbackTimer);
-  feedbackTimer = undefined;
-  renderQuestion();
-}
-
 function renderFeedback(choice) {
   const index = responses.length - 1;
   const scene = feedbackSequence[index];
@@ -118,7 +110,6 @@ function renderFeedback(choice) {
     <button class="primary" data-continue type="button">Continuar <span aria-hidden="true">→</span></button>
   `);
   track('visualizacao');
-  feedbackTimer = window.setTimeout(finishFeedback, feedbackDuration);
 }
 
 function renderAnalysis(goal) {
@@ -305,7 +296,7 @@ screen.addEventListener('click', event => {
   }
 
   if (button.hasAttribute('data-continue')) {
-    finishFeedback();
+    renderQuestion();
     return;
   }
 

@@ -339,12 +339,6 @@ footer summary { cursor: pointer; }
 }
 #phrase-form .back { margin-inline-start: 12px; }
 #phrase-result { overflow-wrap: anywhere; }
-.feedback-art .traced { animation-duration: .9s; }
-.feedback-art .dove { animation-duration: .75s; animation-delay: .8s; }
-.feedback-art .knot-loop { animation-duration: .9s, .55s; animation-delay: 0s, .85s; }
-.feedback-art .knot-free { animation-duration: .65s; animation-delay: .94s; }
-.feedback-art .heart-left, .feedback-art .heart-right { animation-duration: .65s; animation-delay: .85s; }
-.feedback-art .heart-crack { animation-duration: .7s, .55s; animation-delay: 0s, .85s; }
 
 .layout:has(.result) { padding-bottom: 100px; }
 body:has(.result) footer { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
